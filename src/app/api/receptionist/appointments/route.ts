@@ -7,7 +7,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const WalkInSchema = z.object({
-  doctorId: z.string().uuid(),
+  doctorId: z.string().trim().uuid(),
   slotStart: z.string().datetime(),
   slotEnd: z.string().datetime(),
   patientName: z.string().min(1).max(100),
@@ -17,7 +17,9 @@ const WalkInSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-async function requireReceptionist(supabase: Awaited<ReturnType<typeof createClient>>) {
+async function requireReceptionist(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+) {
   const {
     data: { user },
     error,

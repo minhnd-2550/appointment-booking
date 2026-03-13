@@ -9,8 +9,8 @@ const CLAIM_TOKEN_TTL_MINUTES = 60;
  */
 export async function notifyWaitlist(
   doctorId: string,
-  _freedSlotStart: string,
-  _freedSlotEnd: string,
+  freedSlotStart: string,
+  freedSlotEnd: string,
 ): Promise<void> {
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,7 +48,7 @@ export async function notifyWaitlist(
 
     if (!profile?.email) continue;
 
-    const claimUrl = `${baseUrl}/waitlist/claim?token=${token}`;
+    const claimUrl = `${baseUrl}/waitlist/claim?token=${token}&slotStart=${encodeURIComponent(freedSlotStart)}&slotEnd=${encodeURIComponent(freedSlotEnd)}`;
 
     sendNotification("waitlist-opportunity", profile.email, {
       name: profile.full_name ?? undefined,

@@ -14,6 +14,38 @@ const BodySchema = z.object({
   status: z.enum(["pending", "confirmed", "completed", "cancelled", "no-show"]),
 });
 
+async function resolveDoctorId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  userEmail?: string,
+) {
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("role, doctor_id")
+    .eq("id", userId)
+    .single();
+
+  if (!profile || (profile.role !== "provider" && profile.role !== "admin")) {
+    return null;
+  }
+
+  if (profile.doctor_id) {
+    return profile.doctor_id;
+  }
+
+  if (!userEmail) {
+    return null;
+  }
+
+  const { data: doctorByEmail } = await supabase
+    .from("doctors")
+    .select("id")
+    .eq("email", userEmail)
+    .single();
+
+  return doctorByEmail?.id ?? null;
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -28,13 +60,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: doctor } = await supabase
-    .from("doctors")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const doctorId = await resolveDoctorId(
+    supabase,
+    user.id,
+    user.email ?? undefined,
+  );
 
-  if (!doctor) {
+  if (!doctorId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -51,7 +83,7 @@ export async function PATCH(
     .from("appointments")
     .select("id, status")
     .eq("id", id)
-    .eq("doctor_id", doctor.id)
+    .eq("doctor_id", doctorId)
     .single();
 
   if (!appt) {

@@ -42,7 +42,6 @@ const PAGE_SIZE = 20;
 export function NotificationDrawer({
   open,
   onOpenChange,
-  patientId,
 }: NotificationDrawerProps) {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();

@@ -11,7 +11,34 @@ const UpdateProfileSchema = z.object({
   acceptingNewPatients: z.boolean().optional(),
 });
 
-export async function GET(request: NextRequest) {
+type AuthContext = {
+  role: string;
+  doctorId: string | null;
+  email: string | null;
+};
+
+async function resolveDoctorId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ctx: AuthContext,
+) {
+  if (ctx.doctorId) {
+    return ctx.doctorId;
+  }
+
+  if (!ctx.email) {
+    return null;
+  }
+
+  const { data: doctorByEmail } = await supabase
+    .from("doctors")
+    .select("id")
+    .eq("email", ctx.email)
+    .single();
+
+  return doctorByEmail?.id ?? null;
+}
+
+export async function GET() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -21,10 +48,36 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { data: profile, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("role, doctor_id")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile || profile.role !== "provider") {
+    return NextResponse.json(
+      { error: "Doctor profile not found" },
+      { status: 404 },
+    );
+  }
+
+  const doctorId = await resolveDoctorId(supabase, {
+    role: profile.role,
+    doctorId: profile.doctor_id,
+    email: user.email ?? null,
+  });
+
+  if (!doctorId) {
+    return NextResponse.json(
+      { error: "Doctor profile not found" },
+      { status: 404 },
+    );
+  }
+
   const { data, error } = await supabase
     .from("doctors")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("id", doctorId)
     .single();
 
   if (error || !data) {
@@ -45,6 +98,32 @@ export async function PATCH(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("role, doctor_id")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile || profile.role !== "provider") {
+    return NextResponse.json(
+      { error: "Doctor profile not found" },
+      { status: 404 },
+    );
+  }
+
+  const doctorId = await resolveDoctorId(supabase, {
+    role: profile.role,
+    doctorId: profile.doctor_id,
+    email: user.email ?? null,
+  });
+
+  if (!doctorId) {
+    return NextResponse.json(
+      { error: "Doctor profile not found" },
+      { status: 404 },
+    );
   }
 
   const body = await request.json();
@@ -72,7 +151,7 @@ export async function PATCH(request: NextRequest) {
   const { data, error } = await supabase
     .from("doctors")
     .update(updates)
-    .eq("user_id", user.id)
+    .eq("id", doctorId)
     .select()
     .single();
 

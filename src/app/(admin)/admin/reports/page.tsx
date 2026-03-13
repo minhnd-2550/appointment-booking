@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,9 +75,11 @@ export default function AdminReportsPage() {
               Xem và xuất báo cáo lịch hẹn và doanh thu
             </p>
           </div>
-          <a href='/' className='text-sm text-slate-500 hover:text-slate-700'>
+          <Link
+            href='/'
+            className='text-sm text-slate-500 hover:text-slate-700'>
             ← Trang chủ
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -187,7 +190,7 @@ export default function AdminReportsPage() {
 
         {!apptStats && !revenueStats && !loading && (
           <div className='text-center text-slate-400 py-12 text-sm'>
-            Chọn khoảng thời gian và nhấn "Xem báo cáo"
+            Chọn khoảng thời gian và nhấn &quot;Xem báo cáo&quot;
           </div>
         )}
       </div>

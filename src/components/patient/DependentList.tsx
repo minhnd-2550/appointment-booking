@@ -204,22 +204,6 @@ export function DependentList() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const deactivateMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/patient/dependents/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: false }),
-      });
-      if (!res.ok) throw new Error("Vô hiệu hóa thất bại");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["patient-dependents"] });
-      toast.success("Đã vô hiệu hóa");
-    },
-    onError: () => toast.error("Thất bại. Vui lòng thử lại."),
-  });
-
   const dependents = data?.dependents ?? [];
 
   return (

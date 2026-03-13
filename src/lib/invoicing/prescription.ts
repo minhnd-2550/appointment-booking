@@ -21,110 +21,99 @@ export interface PrescriptionData {
 }
 
 /**
- * Generates a simple HTML-based prescription PDF as a Buffer.
- * Uses a minimal HTML template rendered server-side — no pdfkit dependency.
+ * Generate a lightweight PDF prescription buffer (no external PDF dependency).
  */
 export function generatePrescriptionPdf(data: PrescriptionData): Buffer {
   const formattedDate = format(new Date(data.date), "dd/MM/yyyy", {
     locale: vi,
   });
 
-  const medicationsHtml =
-    data.medications && data.medications.length > 0
-      ? `
-        <table style="width:100%;border-collapse:collapse;margin-top:8px;">
-          <thead>
-            <tr style="background:#f0f4f8;">
-              <th style="padding:6px 10px;text-align:left;border:1px solid #d0d7de;">Thuốc</th>
-              <th style="padding:6px 10px;text-align:left;border:1px solid #d0d7de;">Liều</th>
-              <th style="padding:6px 10px;text-align:left;border:1px solid #d0d7de;">Tần suất</th>
-              <th style="padding:6px 10px;text-align:left;border:1px solid #d0d7de;">Thời gian</th>
-              <th style="padding:6px 10px;text-align:left;border:1px solid #d0d7de;">Ghi chú</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.medications
-              .map(
-                (m, i) => `
-              <tr style="${i % 2 === 0 ? "" : "background:#f9fafb;"}">
-                <td style="padding:6px 10px;border:1px solid #d0d7de;">${escHtml(m.name)}</td>
-                <td style="padding:6px 10px;border:1px solid #d0d7de;">${escHtml(m.dosage)}</td>
-                <td style="padding:6px 10px;border:1px solid #d0d7de;">${escHtml(m.frequency)}</td>
-                <td style="padding:6px 10px;border:1px solid #d0d7de;">${escHtml(m.duration)}</td>
-                <td style="padding:6px 10px;border:1px solid #d0d7de;">${escHtml(m.notes ?? "")}</td>
-              </tr>`,
-              )
-              .join("")}
-          </tbody>
-        </table>`
-      : '<p style="color:#666;">Không có toa thuốc</p>';
+  const lines: string[] = [
+    data.clinicName,
+    "TOA THUOC",
+    `Ma ca: ${data.appointmentId.slice(0, 8).toUpperCase()}`,
+    `Ngay: ${formattedDate}`,
+    "",
+    `Benh nhan: ${data.patientName}`,
+    ...(data.patientDob ? [`Ngay sinh: ${data.patientDob}`] : []),
+    `Bac si: ${data.doctorName}`,
+    `Chuyen khoa: ${data.doctorSpecialty}`,
+    ...(data.visitReason ? ["", `Ly do kham: ${data.visitReason}`] : []),
+    "",
+    "--- DON THUOC ---",
+  ];
 
-  const html = `<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"/>
-  <title>Toa thuốc - ${escHtml(data.patientName)}</title>
-  <style>
-    body { font-family: Arial, sans-serif; font-size: 13px; margin: 0; padding: 32px; color: #1a1a1a; }
-    h1 { font-size: 20px; margin: 0 0 4px; }
-    h2 { font-size: 15px; margin: 20px 0 6px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .clinic { font-size: 11px; color: #555; }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin: 12px 0; }
-    .label { color: #555; font-size: 12px; }
-    .value { font-weight: 600; }
-    .footer { margin-top: 40px; text-align: right; font-size: 12px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      <h1>TOA THUỐC</h1>
-      <div class="clinic">${escHtml(data.clinicName)}</div>
-    </div>
-    <div style="text-align:right;font-size:12px;color:#555;">
-      Ngày: ${formattedDate}<br/>
-      Mã CA: ${escHtml(data.appointmentId.slice(0, 8).toUpperCase())}
-    </div>
-  </div>
-
-  <h2>Thông tin bệnh nhân</h2>
-  <div class="info-grid">
-    <div><span class="label">Họ và tên: </span><span class="value">${escHtml(data.patientName)}</span></div>
-    ${data.patientDob ? `<div><span class="label">Ngày sinh: </span><span class="value">${escHtml(data.patientDob)}</span></div>` : ""}
-  </div>
-
-  <h2>Thông tin bác sĩ</h2>
-  <div class="info-grid">
-    <div><span class="label">Bác sĩ: </span><span class="value">${escHtml(data.doctorName)}</span></div>
-    <div><span class="label">Chuyên khoa: </span><span class="value">${escHtml(data.doctorSpecialty)}</span></div>
-  </div>
-
-  ${data.visitReason ? `<h2>Lý do khám</h2><p>${escHtml(data.visitReason)}</p>` : ""}
-
-  <h2>Toa thuốc</h2>
-  ${medicationsHtml}
-
-  ${
-    data.prescriptionNote
-      ? `<h2>Ghi chú</h2><p style="white-space:pre-wrap;">${escHtml(data.prescriptionNote)}</p>`
-      : ""
+  if (data.medications && data.medications.length > 0) {
+    data.medications.forEach((m, index) => {
+      lines.push(
+        `${index + 1}. ${m.name}`,
+        `   Lieu: ${m.dosage} | Tan suat: ${m.frequency} | Thoi gian: ${m.duration}`,
+        ...(m.notes ? [`   Ghi chu: ${m.notes}`] : []),
+      );
+    });
+  } else {
+    lines.push("Khong co thuoc duoc ke.");
   }
 
-  <div class="footer">
-    <em>Tài liệu này được tạo tự động — ${formattedDate}</em>
-  </div>
-</body>
-</html>`;
+  if (data.prescriptionNote) {
+    lines.push("", "--- GHI CHU ---", data.prescriptionNote);
+  }
 
-  return Buffer.from(html, "utf-8");
+  lines.push("", `Tai lieu tao tu dong - ${formattedDate}`);
+
+  const textContent = lines
+    .map((line, i) => {
+      const y = 800 - i * 16;
+      const safe = pdfEscape(line);
+      const fontSize = i === 0 ? 14 : i === 1 ? 13 : 11;
+      return `BT /F1 ${fontSize} Tf 48 ${y} Td (${safe}) Tj ET`;
+    })
+    .join("\n");
+
+  const catalog = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
+  const pages = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
+  const page =
+    "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] " +
+    "/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n";
+  const stream = `4 0 obj\n<< /Length ${textContent.length} >>\nstream\n${textContent}\nendstream\nendobj\n`;
+  const font =
+    "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
+
+  const header = "%PDF-1.4\n";
+  const body = catalog + pages + page + stream + font;
+
+  const offsets: number[] = [];
+  let pos = header.length;
+  offsets.push(pos);
+  pos += catalog.length;
+  offsets.push(pos);
+  pos += pages.length;
+  offsets.push(pos);
+  pos += page.length;
+  offsets.push(pos);
+  pos += stream.length;
+  offsets.push(pos);
+
+  const xrefOffset = header.length + body.length;
+  const xref = [
+    "xref",
+    "0 6",
+    "0000000000 65535 f ",
+    ...offsets.map((o) => `${String(o).padStart(10, "0")} 00000 n `),
+  ].join("\n");
+
+  const trailer = `\ntrailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+
+  return Buffer.from(header + body + xref + trailer, "latin1");
 }
 
-function escHtml(str: string): string {
+function pdfEscape(str: string): string {
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)")
+    .replace(
+      /[^\x20-\x7E]/g,
+      (c) => `\\${c.charCodeAt(0).toString(8).padStart(3, "0")}`,
+    );
 }

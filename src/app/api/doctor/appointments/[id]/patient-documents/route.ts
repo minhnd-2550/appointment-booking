@@ -7,6 +7,38 @@ const BUCKET = "patient-documents";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+async function resolveDoctorId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  userEmail?: string,
+) {
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("role, doctor_id")
+    .eq("id", userId)
+    .single();
+
+  if (!profile || (profile.role !== "provider" && profile.role !== "admin")) {
+    return null;
+  }
+
+  if (profile.doctor_id) {
+    return profile.doctor_id;
+  }
+
+  if (!userEmail) {
+    return null;
+  }
+
+  const { data: doctorByEmail } = await supabase
+    .from("doctors")
+    .select("id")
+    .eq("email", userEmail)
+    .single();
+
+  return doctorByEmail?.id ?? null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -22,13 +54,12 @@ export async function GET(
   }
 
   // Verify doctor owns this appointment
-  const { data: profile } = await supabase
-    .from("doctors")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile) {
+  const doctorId = await resolveDoctorId(
+    supabase,
+    user.id,
+    user.email ?? undefined,
+  );
+  if (!doctorId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -36,7 +67,7 @@ export async function GET(
     .from("appointments")
     .select("id")
     .eq("id", id)
-    .eq("doctor_id", profile.id)
+    .eq("doctor_id", doctorId)
     .single();
 
   if (apptErr || !appt) {

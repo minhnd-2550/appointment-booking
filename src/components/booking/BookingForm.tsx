@@ -45,6 +45,8 @@ const bookingSchema = z.object({
   visitReason: z.string().max(500).optional(),
 });
 
+const doctorIdSchema = z.string().uuid();
+
 type BookingFormValues = z.infer<typeof bookingSchema>;
 
 interface BookingFormProps {
@@ -54,6 +56,7 @@ interface BookingFormProps {
   onSuccess: () => void;
   onSlotTaken: () => void;
   isAuthenticated?: boolean;
+  userId?: string;
 }
 
 export function BookingForm({
@@ -62,6 +65,7 @@ export function BookingForm({
   onSuccess,
   onSlotTaken,
   isAuthenticated,
+  userId,
 }: BookingFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [bookingFor, setBookingFor] = useState<"self" | "dependent">("self");
@@ -93,20 +97,31 @@ export function BookingForm({
 
   async function onSubmit(values: BookingFormValues) {
     setServerError(null);
+
+    const doctorIdCheck = doctorIdSchema.safeParse(doctorId);
+    if (!doctorIdCheck.success) {
+      setServerError(
+        "ID bác sĩ không hợp lệ. Vui lòng tải lại trang và chọn bác sĩ lại.",
+      );
+      console.error("[BookingForm] invalid doctorId", { doctorId });
+      return;
+    }
+
     try {
       const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          doctorId,
+          doctorId: doctorId.trim(),
           slotStart: selectedSlot.start,
           slotEnd: selectedSlot.end,
           patientName: values.patientName,
           patientEmail: values.patientEmail,
           patientPhone: values.patientPhone || undefined,
           visitReason: values.visitReason || undefined,
+          userId: userId && bookingFor === "self" ? userId : undefined,
           dependentId:
-            isAuthenticated && bookingFor === "dependent" && selectedDependentId
+            userId && bookingFor === "dependent" && selectedDependentId
               ? selectedDependentId
               : undefined,
         }),
@@ -121,8 +136,19 @@ export function BookingForm({
       }
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        setServerError(data.error ?? "Đặt lịch thất bại. Vui lòng thử lại.");
+        const data = (await res.json()) as {
+          error?: string;
+          details?: { fieldErrors?: Record<string, string[]> };
+          doctorIdReceived?: unknown;
+        };
+
+        if (data?.details?.fieldErrors?.doctorId?.length) {
+          setServerError(
+            `ID bác sĩ gửi lên không hợp lệ (${String(data.doctorIdReceived ?? "unknown")}). Vui lòng tải lại trang và thử lại.`,
+          );
+        } else {
+          setServerError(data.error ?? "Đặt lịch thất bại. Vui lòng thử lại.");
+        }
         return;
       }
 

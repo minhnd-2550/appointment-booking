@@ -1,0 +1,14 @@
+-- Deprecated file: do NOT seed auth via direct SQL into auth.users.
+--
+-- Why:
+-- - Direct INSERT to auth.users can miss internal auth records (identities/session metadata)
+-- - This causes login failure: {"error_code":"invalid_credentials"}
+--
+-- Use this instead:
+--   bash ./supabase/seed-auth-users.sh
+--
+-- Recommended local seed flow:
+--   1) supabase db reset --local --yes
+--   2) bash ./supabase/seed-auth-users.sh
+--
+-- Test credentials are defined in seed-auth-users.sh.

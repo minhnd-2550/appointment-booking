@@ -73,7 +73,8 @@ CREATE TABLE appointments (
   visit_reason    text,
   status          appointment_status NOT NULL DEFAULT 'pending',
   reminder_sent   boolean            NOT NULL DEFAULT false,
-  created_at      timestamptz        NOT NULL DEFAULT now()
+  created_at      timestamptz        NOT NULL DEFAULT now(),
+  updated_at      timestamptz        NOT NULL DEFAULT now()
 );
 
 -- Partial unique index: only one active booking per (doctor, slot)

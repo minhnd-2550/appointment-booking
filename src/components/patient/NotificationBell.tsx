@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ interface NotificationBellProps {
 export function NotificationBell({ patientId }: NotificationBellProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Initial fetch of unread count
   useEffect(() => {
@@ -35,7 +35,7 @@ export function NotificationBell({ patientId }: NotificationBellProps) {
       .then(({ count }) => {
         setUnreadCount(count ?? 0);
       });
-  }, [patientId]);
+  }, [patientId, supabase]);
 
   // Realtime subscription for new notifications
   useEffect(() => {

@@ -21,7 +21,7 @@ const PutBodySchema = z.object({
   preferences: z.array(PreferenceSchema).min(1),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const supabase = await createClient();
   const {
     data: { user },

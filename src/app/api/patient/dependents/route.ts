@@ -12,7 +12,7 @@ const CreateDependentSchema = z.object({
   relationship: z.enum(RELATIONSHIP),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const supabase = await createClient();
   const {
     data: { user },

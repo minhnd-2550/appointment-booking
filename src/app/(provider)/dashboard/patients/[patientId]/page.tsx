@@ -7,23 +7,54 @@ interface Props {
   params: Promise<{ patientId: string }>;
 }
 
+async function resolveDoctorId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  userEmail?: string,
+) {
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("role, doctor_id")
+    .eq("id", userId)
+    .single();
+
+  if (!profile || (profile.role !== "provider" && profile.role !== "admin")) {
+    return null;
+  }
+
+  if (profile.doctor_id) {
+    return profile.doctor_id;
+  }
+
+  if (!userEmail) {
+    return null;
+  }
+
+  const { data: doctorByEmail } = await supabase
+    .from("doctors")
+    .select("id")
+    .eq("email", userEmail)
+    .single();
+
+  return doctorByEmail?.id ?? null;
+}
+
 export default async function PatientHistoryPage({ params }: Props) {
   const { patientId } = await params;
   const supabase = await createClient();
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
-  if (!user) notFound();
+  if (authError || !user) notFound();
 
-  // Resolve doctor
-  const { data: doctor } = await supabase
-    .from("doctors")
-    .select("id, name")
-    .eq("email", user.email ?? "")
-    .single();
-
-  if (!doctor) notFound();
+  const doctorId = await resolveDoctorId(
+    supabase,
+    user.id,
+    user.email ?? undefined,
+  );
+  if (!doctorId) notFound();
 
   // Load appointment history for this patient with this doctor
   const { data: appointments } = await supabase
@@ -35,7 +66,7 @@ export default async function PatientHistoryPage({ params }: Props) {
        ),
        lab_orders(id, test_name, type, status)`,
     )
-    .eq("doctor_id", doctor.id)
+    .eq("doctor_id", doctorId)
     .eq("user_id", patientId)
     .order("slot_start", { ascending: false });
 
@@ -75,7 +106,6 @@ export default async function PatientHistoryPage({ params }: Props) {
             lab_orders: a.lab_orders ?? [],
           })) as Parameters<typeof PatientHistoryView>[0]["appointments"]
         }
-        doctorId={doctor.id}
       />
     </div>
   );

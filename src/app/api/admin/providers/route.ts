@@ -44,7 +44,7 @@ const postSchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(2),
   specialty: z.string().min(2),
-  doctorId: z.string().uuid().optional(),
+  doctorId: z.string().trim().uuid().optional(),
 });
 
 export async function POST(request: Request) {

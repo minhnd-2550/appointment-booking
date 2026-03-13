@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +18,9 @@ import {
 } from "@/components/ui/table";
 
 interface Patient {
-  user_id: string;
+  patient_key: string;
+  user_id: string | null;
+  booking_type: "authenticated" | "guest";
   patient_name: string;
   patient_email: string;
   last_appointment: string;
@@ -37,6 +40,7 @@ async function fetchPatients(search: string, page: number) {
 }
 
 export function DoctorPatientList() {
+  const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -88,6 +92,7 @@ export function DoctorPatientList() {
               <TableRow>
                 <TableHead>Họ tên</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Loại đặt lịch</TableHead>
                 <TableHead>Lần gần nhất</TableHead>
                 <TableHead></TableHead>
               </TableRow>
@@ -96,34 +101,60 @@ export function DoctorPatientList() {
               {data.data.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className='text-center text-muted-foreground py-8'>
                     Không có bệnh nhân nào
                   </TableCell>
                 </TableRow>
               ) : (
-                data.data.map((patient) => (
-                  <TableRow key={patient.user_id}>
-                    <TableCell>{patient.patient_name}</TableCell>
-                    <TableCell className='text-muted-foreground'>
-                      {patient.patient_email}
-                    </TableCell>
-                    <TableCell>
-                      {format(
-                        parseISO(patient.last_appointment),
-                        "dd/MM/yyyy",
-                        { locale: vi },
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant='outline' size='sm' asChild>
-                        <Link href={`/dashboard/patients/${patient.user_id}`}>
-                          Xem lịch sử
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                data.data.map((patient) => {
+                  const detailHref = patient.user_id
+                    ? `/dashboard/patients/${patient.user_id}`
+                    : null;
+
+                  return (
+                    <TableRow
+                      key={patient.patient_key}
+                      className={
+                        detailHref ? "cursor-pointer hover:bg-muted/40" : ""
+                      }
+                      onClick={() => {
+                        if (detailHref) router.push(detailHref);
+                      }}>
+                      <TableCell>{patient.patient_name}</TableCell>
+                      <TableCell className='text-muted-foreground'>
+                        {patient.patient_email}
+                      </TableCell>
+                      <TableCell>
+                        {patient.booking_type === "authenticated"
+                          ? "Có tài khoản"
+                          : "Khách vãng lai"}
+                      </TableCell>
+                      <TableCell>
+                        {format(
+                          parseISO(patient.last_appointment),
+                          "dd/MM/yyyy",
+                          { locale: vi },
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {patient.user_id ? (
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            asChild
+                            onClick={(e) => e.stopPropagation()}>
+                            <Link href={detailHref!}>Xem lịch sử</Link>
+                          </Button>
+                        ) : (
+                          <span className='text-xs text-muted-foreground'>
+                            Khách vãng lai
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

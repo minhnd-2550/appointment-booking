@@ -4,11 +4,15 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const ScheduleBodySchema = z.object({
-  doctorId: z.string().uuid(),
+  doctorId: z.string().trim().uuid(),
   dayOfWeek: z.number().int().min(0).max(6),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:mm"),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:mm"),
   slotDurationMinutes: z.number().int().min(15).max(120),
+});
+
+const SchedulesQuerySchema = z.object({
+  doctorId: z.string().trim().uuid(),
 });
 
 async function requireAdmin() {
@@ -32,13 +36,18 @@ async function requireAdmin() {
  * GET /api/schedules?doctorId=<uuid>
  */
 export async function GET(request: NextRequest) {
-  const doctorId = request.nextUrl.searchParams.get("doctorId");
-  if (!doctorId || !/^[0-9a-f-]{36}$/i.test(doctorId)) {
+  const queryParsed = SchedulesQuerySchema.safeParse({
+    doctorId: request.nextUrl.searchParams.get("doctorId") ?? "",
+  });
+
+  if (!queryParsed.success) {
     return NextResponse.json(
       { error: "Missing or invalid doctorId" },
       { status: 400 },
     );
   }
+
+  const { doctorId } = queryParsed.data;
 
   const supabase = await createClient();
   const { data, error } = await supabase

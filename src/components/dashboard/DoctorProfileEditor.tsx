@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,34 +20,21 @@ interface DoctorProfile {
   accepting_new_patients: boolean;
 }
 
-export function DoctorProfileEditor() {
+function DoctorProfileForm({ profile }: { profile: DoctorProfile }) {
   const queryClient = useQueryClient();
-
-  const { data, isLoading } = useQuery<{ profile: DoctorProfile }>({
-    queryKey: ["doctor-profile"],
-    queryFn: async () => {
-      const res = await fetch("/api/doctor/profile");
-      if (!res.ok) throw new Error("Không thể tải hồ sơ");
-      return res.json();
-    },
-  });
-
-  const [bio, setBio] = useState("");
-  const [qualifications, setQualifications] = useState("");
-  const [yearsOfExperience, setYearsOfExperience] = useState("");
-  const [consultationFee, setConsultationFee] = useState("");
-  const [acceptingNewPatients, setAcceptingNewPatients] = useState(true);
-
-  useEffect(() => {
-    if (data?.profile) {
-      const p = data.profile;
-      setBio(p.bio ?? "");
-      setQualifications(p.qualifications ?? "");
-      setYearsOfExperience(p.years_of_experience?.toString() ?? "");
-      setConsultationFee(p.consultation_fee?.toString() ?? "");
-      setAcceptingNewPatients(p.accepting_new_patients);
-    }
-  }, [data]);
+  const [bio, setBio] = useState(profile.bio ?? "");
+  const [qualifications, setQualifications] = useState(
+    profile.qualifications ?? "",
+  );
+  const [yearsOfExperience, setYearsOfExperience] = useState(
+    profile.years_of_experience?.toString() ?? "",
+  );
+  const [consultationFee, setConsultationFee] = useState(
+    profile.consultation_fee?.toString() ?? "",
+  );
+  const [acceptingNewPatients, setAcceptingNewPatients] = useState(
+    profile.accepting_new_patients,
+  );
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -75,25 +62,15 @@ export function DoctorProfileEditor() {
     onError: () => toast.error("Lưu thất bại. Vui lòng thử lại."),
   });
 
-  if (isLoading) {
-    return (
-      <div className='flex justify-center py-8'>
-        <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
-      </div>
-    );
-  }
-
-  const profile = data?.profile;
-
   return (
     <div className='space-y-6 max-w-xl'>
       <div className='space-y-1'>
         <p className='text-sm text-muted-foreground'>Tên</p>
-        <p className='font-semibold'>{profile?.name}</p>
+        <p className='font-semibold'>{profile.name}</p>
       </div>
       <div className='space-y-1'>
         <p className='text-sm text-muted-foreground'>Chuyên khoa</p>
-        <p className='font-semibold'>{profile?.specialty}</p>
+        <p className='font-semibold'>{profile.specialty}</p>
       </div>
 
       <div className='space-y-1.5'>
@@ -171,4 +148,33 @@ export function DoctorProfileEditor() {
       </Button>
     </div>
   );
+}
+
+export function DoctorProfileEditor() {
+  const { data, isLoading } = useQuery<{ profile: DoctorProfile }>({
+    queryKey: ["doctor-profile"],
+    queryFn: async () => {
+      const res = await fetch("/api/doctor/profile");
+      if (!res.ok) throw new Error("Không thể tải hồ sơ");
+      return res.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className='flex justify-center py-8'>
+        <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
+      </div>
+    );
+  }
+
+  if (!data?.profile) {
+    return (
+      <p className='text-sm text-muted-foreground'>
+        Không thể tải hồ sơ bác sĩ.
+      </p>
+    );
+  }
+
+  return <DoctorProfileForm key={data.profile.id} profile={data.profile} />;
 }

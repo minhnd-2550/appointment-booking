@@ -2,7 +2,39 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
-const paramsSchema = z.object({ patientId: z.string().uuid() });
+const paramsSchema = z.object({ patientId: z.string().trim().uuid() });
+
+async function resolveDoctorId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  userEmail?: string,
+) {
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("role, doctor_id")
+    .eq("id", userId)
+    .single();
+
+  if (!profile || (profile.role !== "provider" && profile.role !== "admin")) {
+    return null;
+  }
+
+  if (profile.doctor_id) {
+    return profile.doctor_id;
+  }
+
+  if (!userEmail) {
+    return null;
+  }
+
+  const { data: doctorByEmail } = await supabase
+    .from("doctors")
+    .select("id")
+    .eq("email", userEmail)
+    .single();
+
+  return doctorByEmail?.id ?? null;
+}
 
 export async function GET(
   request: NextRequest,
@@ -21,23 +53,13 @@ export async function GET(
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const doctorId = await resolveDoctorId(
+    supabase,
+    user.id,
+    user.email ?? undefined,
+  );
 
-  if (profile?.role !== "provider" && profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const { data: doctor } = await supabase
-    .from("doctors")
-    .select("id")
-    .eq("email", user.email ?? "")
-    .single();
-
-  if (!doctor) {
+  if (!doctorId) {
     return NextResponse.json(
       { error: "Doctor profile not found" },
       { status: 404 },
@@ -53,7 +75,7 @@ export async function GET(
        medical_records ( id, diagnosis, examination_notes, created_at ),
        lab_orders ( id, test_name, type, status )`,
     )
-    .eq("doctor_id", doctor.id)
+    .eq("doctor_id", doctorId)
     .eq("user_id", parsed.data.patientId)
     .order("slot_start", { ascending: false });
 

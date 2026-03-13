@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { sendNotification } from "@/lib/notifications/send";
 
 const joinSchema = z.object({
-  doctorId: z.string().uuid(),
+  doctorId: z.string().trim().uuid(),
   preferredDateFrom: z.string().optional(),
   preferredDateTo: z.string().optional(),
 });

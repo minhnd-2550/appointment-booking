@@ -4,7 +4,6 @@ import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -77,14 +76,9 @@ interface Props {
   patientId: string;
   patientProfile: PatientProfile | null;
   appointments: Appointment[];
-  doctorId: string;
 }
 
-export function PatientHistoryView({
-  patientProfile,
-  appointments,
-  doctorId,
-}: Props) {
+export function PatientHistoryView({ patientProfile, appointments }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
@@ -108,6 +102,15 @@ export function PatientHistoryView({
       <h2 className='text-lg font-semibold'>
         Lịch sử khám ({appointments.length})
       </h2>
+
+      <div className='rounded-lg border bg-muted/20 px-4 py-3 text-sm space-y-1'>
+        <p className='font-medium'>Cách sử dụng chẩn đoán & kê đơn</p>
+        <p className='text-muted-foreground'>
+          1) Mở một lịch hẹn bên dưới → 2) Nhập <strong>Chẩn đoán</strong> và
+          <strong> Ghi chú khám</strong> → 3) Bấm <strong>+ Thêm thuốc</strong>
+          để kê đơn → 4) Bấm <strong>Lưu ghi chú</strong>.
+        </p>
+      </div>
 
       <div className='space-y-3'>
         {appointments.map((appt) => {

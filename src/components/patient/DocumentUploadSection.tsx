@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Image, Loader2, Trash2, Upload } from "lucide-react";
+import { FileText, Image as ImageIcon, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -40,7 +40,7 @@ function formatFileSize(bytes: number) {
 
 function FileIcon({ type }: { type: string }) {
   if (type.startsWith("image/"))
-    return <Image className='h-5 w-5 text-blue-500' />;
+    return <ImageIcon className='h-5 w-5 text-blue-500' />;
   return <FileText className='h-5 w-5 text-red-500' />;
 }
 

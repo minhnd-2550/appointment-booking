@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface Preference {
   eventType: string;
@@ -23,24 +23,9 @@ const EVENT_LABELS: Record<string, string> = {
   document_uploaded: "Tài liệu mới được tải lên",
 };
 
-export function NotificationPreferencesForm() {
+function NotificationPreferencesInner({ initial }: { initial: Preference[] }) {
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery<{ preferences: Preference[] }>({
-    queryKey: ["notification-preferences"],
-    queryFn: async () => {
-      const res = await fetch("/api/patient/notification-preferences");
-      if (!res.ok) throw new Error("Failed to load preferences");
-      return res.json();
-    },
-  });
-
-  const [local, setLocal] = useState<Preference[]>([]);
-
-  useEffect(() => {
-    if (data?.preferences) {
-      setLocal(data.preferences);
-    }
-  }, [data]);
+  const [local, setLocal] = useState<Preference[]>(initial);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -67,14 +52,6 @@ export function NotificationPreferencesForm() {
       ),
     );
   };
-
-  if (isLoading) {
-    return (
-      <div className='flex justify-center py-8'>
-        <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
-      </div>
-    );
-  }
 
   return (
     <div className='space-y-6'>
@@ -108,5 +85,39 @@ export function NotificationPreferencesForm() {
         Lưu cài đặt
       </Button>
     </div>
+  );
+}
+
+export function NotificationPreferencesForm() {
+  const { data, isLoading } = useQuery<{ preferences: Preference[] }>({
+    queryKey: ["notification-preferences"],
+    queryFn: async () => {
+      const res = await fetch("/api/patient/notification-preferences");
+      if (!res.ok) throw new Error("Failed to load preferences");
+      return res.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className='flex justify-center py-8'>
+        <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
+      </div>
+    );
+  }
+
+  if (!data?.preferences) {
+    return (
+      <p className='text-sm text-muted-foreground'>
+        Không thể tải cài đặt thông báo.
+      </p>
+    );
+  }
+
+  return (
+    <NotificationPreferencesInner
+      key={JSON.stringify(data.preferences)}
+      initial={data.preferences}
+    />
   );
 }

@@ -4,13 +4,19 @@ import { sendNotification } from "@/lib/notifications/send";
 import { z } from "zod";
 
 const BookingSchema = z.object({
-  doctorId: z.string().uuid(),
+  doctorId: z.string().trim().uuid(),
   slotStart: z.string().datetime({ offset: true }),
   slotEnd: z.string().datetime({ offset: true }),
   patientName: z.string().min(2).max(100),
   patientEmail: z.string().email(),
-  patientPhone: z.string().regex(/^[+\d\s\-()]{7,20}$/),
+  patientPhone: z
+    .string()
+    .regex(/^[+\d\s\-()]{7,20}$/)
+    .optional()
+    .or(z.literal("")),
   visitReason: z.string().max(500).optional(),
+  userId: z.string().trim().uuid().optional(),
+  dependentId: z.string().trim().uuid().optional(),
 });
 
 /**
@@ -29,8 +35,16 @@ export async function POST(request: NextRequest) {
 
   const parsed = BookingSchema.safeParse(body);
   if (!parsed.success) {
+    const incomingDoctorId =
+      typeof body === "object" && body !== null && "doctorId" in body
+        ? (body as { doctorId?: unknown }).doctorId
+        : undefined;
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
+      {
+        error: "Validation failed",
+        details: parsed.error.flatten(),
+        doctorIdReceived: incomingDoctorId,
+      },
       { status: 422 },
     );
   }
@@ -43,6 +57,8 @@ export async function POST(request: NextRequest) {
     patientEmail,
     patientPhone,
     visitReason,
+    dependentId,
+    userId,
   } = parsed.data;
 
   const supabase = await createServiceClient();
@@ -54,15 +70,17 @@ export async function POST(request: NextRequest) {
     .eq("id", doctorId)
     .single();
 
-  // Call atomic booking function
+  // Call atomic booking function (always use 9-param signature to avoid overload ambiguity)
   const { data, error } = await supabase.rpc("book_appointment", {
     p_doctor_id: doctorId,
     p_slot_start: slotStart,
     p_slot_end: slotEnd,
     p_patient_name: patientName,
     p_patient_email: patientEmail,
-    p_patient_phone: patientPhone,
-    p_visit_reason: visitReason ?? undefined,
+    p_patient_phone: patientPhone || undefined,
+    p_visit_reason: visitReason || undefined,
+    p_user_id: userId || undefined,
+    p_dependent_id: dependentId || undefined,
   });
 
   if (error) {

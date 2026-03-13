@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ interface TodayAppointment {
   slot_end: string;
   status: string;
   visit_reason: string | null;
+  user_id: string | null;
   patients: { full_name: string; phone?: string } | null;
   patient_dependents: { full_name: string } | null;
 }
@@ -84,6 +86,14 @@ function AppointmentRow({ appt }: { appt: TodayAppointment }) {
           )}
         </div>
         <div className='flex gap-2 flex-wrap'>
+          {appt.user_id ? (
+            <Button size='sm' variant='outline' asChild>
+              <Link href={`/dashboard/patients/${appt.user_id}`}>Hồ sơ BN</Link>
+            </Button>
+          ) : (
+            <Badge variant='outline'>Khách vãng lai</Badge>
+          )}
+
           {appt.status === "confirmed" && (
             <>
               <Button

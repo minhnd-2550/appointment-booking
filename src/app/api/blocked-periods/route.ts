@@ -5,10 +5,14 @@ import { z } from "zod";
 import type { Appointment } from "@/types/domain";
 
 const BlockedPeriodBodySchema = z.object({
-  doctorId: z.string().uuid(),
+  doctorId: z.string().trim().uuid(),
   startAt: z.string().datetime({ offset: true }),
   endAt: z.string().datetime({ offset: true }),
   reason: z.string().max(200).optional(),
+});
+
+const BlockedPeriodsQuerySchema = z.object({
+  doctorId: z.string().trim().uuid(),
 });
 
 async function requireAdmin() {
@@ -30,13 +34,18 @@ async function requireAdmin() {
  * GET /api/blocked-periods?doctorId=<uuid>
  */
 export async function GET(request: NextRequest) {
-  const doctorId = request.nextUrl.searchParams.get("doctorId");
-  if (!doctorId || !/^[0-9a-f-]{36}$/i.test(doctorId)) {
+  const queryParsed = BlockedPeriodsQuerySchema.safeParse({
+    doctorId: request.nextUrl.searchParams.get("doctorId") ?? "",
+  });
+
+  if (!queryParsed.success) {
     return NextResponse.json(
       { error: "Missing or invalid doctorId" },
       { status: 400 },
     );
   }
+
+  const { doctorId } = queryParsed.data;
 
   const supabase = await createClient();
   const { data, error } = await supabase

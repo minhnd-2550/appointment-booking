@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 const claimSchema = z.object({
-  token: z.string().uuid(),
+  token: z.string().trim().uuid(),
   slotStart: z.string(),
   slotEnd: z.string(),
 });

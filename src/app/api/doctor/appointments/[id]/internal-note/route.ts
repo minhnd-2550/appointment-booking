@@ -1,6 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+async function resolveDoctorId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  userEmail?: string,
+) {
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("role, doctor_id")
+    .eq("id", userId)
+    .single();
+
+  if (!profile || (profile.role !== "provider" && profile.role !== "admin")) {
+    return null;
+  }
+
+  if (profile.doctor_id) {
+    return profile.doctor_id;
+  }
+
+  if (!userEmail) {
+    return null;
+  }
+
+  const { data: doctorByEmail } = await supabase
+    .from("doctors")
+    .select("id")
+    .eq("email", userEmail)
+    .single();
+
+  return doctorByEmail?.id ?? null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -15,13 +47,13 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: doctor } = await supabase
-    .from("doctors")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const doctorId = await resolveDoctorId(
+    supabase,
+    user.id,
+    user.email ?? undefined,
+  );
 
-  if (!doctor) {
+  if (!doctorId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -29,7 +61,7 @@ export async function GET(
     .from("appointments")
     .select("id")
     .eq("id", id)
-    .eq("doctor_id", doctor.id)
+    .eq("doctor_id", doctorId)
     .single();
 
   if (!appt) {
@@ -63,13 +95,13 @@ export async function PUT(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: doctor } = await supabase
-    .from("doctors")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const doctorId = await resolveDoctorId(
+    supabase,
+    user.id,
+    user.email ?? undefined,
+  );
 
-  if (!doctor) {
+  if (!doctorId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -77,7 +109,7 @@ export async function PUT(
     .from("appointments")
     .select("id")
     .eq("id", id)
-    .eq("doctor_id", doctor.id)
+    .eq("doctor_id", doctorId)
     .single();
 
   if (!appt) {
