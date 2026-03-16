@@ -1,0 +1,50 @@
+name: Seed Remote Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      allow_nonempty:
+        description: "Allow seeding a non-empty database (doctors/appointments already exist)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  seed:
+    name: Seed Supabase demo data
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SEED_ALLOW_NONEMPTY: ${{ github.event.inputs.allow_nonempty }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Verify required secrets
+        run: |
+          missing=()
+          [[ -z "$SUPABASE_DB_URL" ]] && missing+=("SUPABASE_DB_URL")
+          [[ -z "$NEXT_PUBLIC_SUPABASE_URL" ]] && missing+=("NEXT_PUBLIC_SUPABASE_URL")
+          [[ -z "$SUPABASE_SERVICE_ROLE_KEY" ]] && missing+=("SUPABASE_SERVICE_ROLE_KEY")
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::Missing required secrets: ${missing[*]}"
+            echo "Go to: Settings → Secrets and variables → Actions → New repository secret"
+            exit 1
+          fi
+          echo "All required secrets are present."
+
+      - name: Run remote seed
+        run: bash ./supabase/seed-remote.sh
