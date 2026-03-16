@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:auth": "bash ./supabase/seed-auth-users.sh",
+    "seed:remote": "bash ./supabase/seed-remote.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
