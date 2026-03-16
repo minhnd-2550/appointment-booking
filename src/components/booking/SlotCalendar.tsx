@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import { format, isBefore, startOfToday } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -52,24 +52,30 @@ export function SlotCalendar({ doctor }: SlotCalendarProps) {
     staleTime: 30_000,
   });
 
-  // Supabase Realtime — invalidate slot cache when an appointment changes
-  supabase
-    .channel(`appointments:doctor:${doctor.id}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "appointments",
-        filter: `doctor_id=eq.${doctor.id}`,
-      },
-      () => {
-        queryClient.invalidateQueries({
-          queryKey: ["slots", doctor.id],
-        });
-      },
-    )
-    .subscribe();
+  useEffect(() => {
+    // Supabase Realtime — invalidate slot cache when an appointment changes
+    const channel = supabase
+      .channel(`appointments:doctor:${doctor.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "appointments",
+          filter: `doctor_id=eq.${doctor.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({
+            queryKey: ["slots", doctor.id],
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [doctor.id, queryClient, supabase]);
 
   const handleDateSelect = useCallback((day: Date | undefined) => {
     setSelectedDate(day);
@@ -86,7 +92,7 @@ export function SlotCalendar({ doctor }: SlotCalendarProps) {
 
   if (bookingSuccess) {
     return (
-      <div className='bg-green-50 border border-green-200 rounded-xl p-8 text-center'>
+      <div className='rounded-2xl border border-green-200 bg-green-50/90 p-8 text-center shadow-sm'>
         <div className='text-3xl mb-3'>✓</div>
         <h2 className='text-xl font-semibold text-green-800 mb-2'>
           Đặt lịch thành công!
@@ -111,7 +117,7 @@ export function SlotCalendar({ doctor }: SlotCalendarProps) {
   return (
     <div className='grid gap-8 lg:grid-cols-2'>
       {/* Left: Date picker */}
-      <div className='bg-white rounded-xl border border-slate-200 p-5'>
+      <div className='surface-card-strong p-5'>
         <h2 className='text-base font-semibold text-slate-800 mb-4'>
           1. Chọn ngày khám
         </h2>
@@ -154,7 +160,7 @@ export function SlotCalendar({ doctor }: SlotCalendarProps) {
       </div>
 
       {/* Right: Booking form */}
-      <div className='bg-white rounded-xl border border-slate-200 p-5'>
+      <div className='surface-card-strong p-5'>
         <h2 className='text-base font-semibold text-slate-800 mb-4'>
           3. Thông tin bệnh nhân
         </h2>

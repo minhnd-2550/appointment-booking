@@ -21,7 +21,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
     .toUpperCase();
 
   return (
-    <Card className='hover:shadow-md transition-shadow'>
+    <Card className='group overflow-hidden rounded-2xl border-white/70 bg-white/85 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/10'>
       <CardHeader className='flex flex-row items-center gap-4 pb-2'>
         {/* Avatar */}
         {doctor.avatar_url ? (
@@ -29,22 +29,22 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
           <img
             src={doctor.avatar_url}
             alt={`Ảnh bác sĩ ${doctor.name}`}
-            className='h-14 w-14 rounded-full object-cover border border-slate-200'
+            className='h-14 w-14 rounded-full border border-slate-200 object-cover'
           />
         ) : (
           <div
             aria-hidden='true'
-            className='h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-lg select-none'>
+            className='flex h-14 w-14 select-none items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 text-lg font-semibold text-blue-700'>
             {initials}
           </div>
         )}
 
         <div className='flex-1 min-w-0'>
-          <h4 className='font-semibold text-slate-900 truncate'>
+          <h4 className='truncate text-base font-semibold text-slate-900'>
             {doctor.name}
           </h4>
           {doctor.specialty && (
-            <Badge variant='secondary' className='mt-1 text-xs'>
+            <Badge variant='secondary' className='mt-1 rounded-full text-xs'>
               {doctor.specialty}
             </Badge>
           )}
@@ -53,27 +53,29 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
 
       <CardContent className='pt-0'>
         {doctor.bio && (
-          <p className='text-sm text-slate-600 line-clamp-3 mb-3'>
+          <p className='mb-3 line-clamp-3 text-sm leading-relaxed text-slate-600'>
             {doctor.bio}
           </p>
         )}
 
         {doctor.nextAvailableDate ? (
-          <p className='text-xs text-green-600 font-medium mb-3'>
+          <p className='mb-3 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700'>
             Gần nhất:{" "}
             {format(parseISO(doctor.nextAvailableDate), "EEE, dd/MM", {
               locale: vi,
             })}
           </p>
         ) : (
-          <p className='text-xs text-orange-500 mb-3'>Không có lịch trống</p>
+          <p className='mb-3 rounded-lg bg-orange-50 px-2.5 py-1.5 text-xs text-orange-600'>
+            Không có lịch trống
+          </p>
         )}
 
         <div className='flex gap-2'>
-          <Button asChild className='flex-1' size='sm'>
+          <Button asChild className='flex-1 rounded-xl' size='sm'>
             <Link href={`/book/${doctor.id}`}>Đặt lịch</Link>
           </Button>
-          <Button asChild variant='outline' size='sm'>
+          <Button asChild variant='outline' size='sm' className='rounded-xl'>
             <Link href={`/doctors/${doctor.id}`}>Xem hồ sơ</Link>
           </Button>
         </div>

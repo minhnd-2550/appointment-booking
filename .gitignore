@@ -19,10 +19,19 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+*.tmp
+*.swp
+.vscode/
+.idea/
+
+# logs
+*.log
 
 # debug
 npm-debug.log*

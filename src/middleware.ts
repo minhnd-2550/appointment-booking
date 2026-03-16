@@ -97,7 +97,23 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
-    // Patient routes require patient role; redirect unverified patients
+    // Patient routes require patient role; redirect others to role-appropriate home
+    if (isPatientRoute && profile?.role !== "patient") {
+      if (profile?.role === "admin") {
+        return NextResponse.redirect(new URL("/admin/schedules", request.url));
+      }
+      if (profile?.role === "provider") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+      if (profile?.role === "receptionist") {
+        return NextResponse.redirect(
+          new URL("/receptionist/day-view", request.url),
+        );
+      }
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // Redirect unverified patient accounts to verification pending page
     if (isPatientRoute && profile?.role === "patient") {
       if (!user.email_confirmed_at) {
         const verifyUrl = new URL("/auth/verify-pending", request.url);

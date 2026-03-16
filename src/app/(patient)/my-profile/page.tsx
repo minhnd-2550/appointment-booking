@@ -22,7 +22,7 @@ export default async function MyProfilePage() {
   ]);
 
   return (
-    <div className='max-w-2xl mx-auto space-y-8 py-6'>
+    <div className='mx-auto w-full max-w-2xl space-y-8 py-6'>
       <h1 className='text-2xl font-bold'>Hồ sơ của tôi</h1>
       <PatientProfileForm initialProfile={profile ?? null} />
       <MedicalBackgroundList

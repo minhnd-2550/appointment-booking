@@ -9,10 +9,10 @@ export default async function MyInvoicesPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  if (!user) redirect("/auth/login?next=/my-invoices");
 
   return (
-    <div className='max-w-2xl mx-auto px-4 py-8 space-y-6'>
+    <div className='mx-auto w-full max-w-2xl space-y-6 py-6'>
       <h1 className='text-2xl font-bold'>Hoá đơn của tôi</h1>
       <InvoiceList />
     </div>

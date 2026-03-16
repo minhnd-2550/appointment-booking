@@ -81,20 +81,20 @@ export function DoctorProfilePage({
   const fee = profile?.fee_override ?? null;
 
   return (
-    <main className='min-h-screen bg-slate-50'>
-      <header className='bg-white border-b border-slate-200'>
-        <div className='mx-auto max-w-4xl px-4 py-5 flex items-center gap-3'>
+    <main className='page-shell'>
+      <header className='sticky top-0 z-30 border-b border-white/50 bg-white/80 backdrop-blur-md'>
+        <div className='section-shell flex max-w-5xl items-center gap-3 py-4'>
           <Link
-            href='/book'
-            className='text-sm text-slate-500 hover:text-slate-700'>
+            href='/'
+            className='text-sm text-slate-500 transition hover:text-slate-700'>
             ← Danh sách bác sĩ
           </Link>
         </div>
       </header>
 
-      <div className='mx-auto max-w-4xl px-4 py-8 space-y-8'>
+      <div className='section-shell max-w-5xl space-y-8 py-8'>
         {/* Top card */}
-        <div className='bg-white rounded-xl border border-slate-200 p-6 flex gap-6'>
+        <div className='surface-card-strong flex gap-6 p-6'>
           {/* Avatar */}
           <div className='shrink-0'>
             {photo ? (
@@ -105,7 +105,7 @@ export function DoctorProfilePage({
                 className='h-24 w-24 rounded-full object-cover border border-slate-200'
               />
             ) : (
-              <div className='h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-2xl'>
+              <div className='flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 text-2xl font-bold text-blue-700'>
                 {initials}
               </div>
             )}
@@ -150,12 +150,12 @@ export function DoctorProfilePage({
               </div>
             )}
 
-            <div className='flex gap-3 pt-2 flex-wrap'>
-              <Button asChild>
+            <div className='flex flex-wrap gap-3 pt-2'>
+              <Button asChild className='rounded-xl'>
                 <Link href={`/book/${doctor.id}`}>Đặt lịch khám</Link>
               </Button>
               {!nextAvailableDate && (
-                <Button asChild variant='outline'>
+                <Button asChild variant='outline' className='rounded-xl'>
                   <Link href={`/book/${doctor.id}/waitlist`}>Đăng ký chờ</Link>
                 </Button>
               )}
@@ -165,7 +165,7 @@ export function DoctorProfilePage({
 
         {/* Bio & Qualifications */}
         {(profile?.biography || doctor.bio || profile?.qualifications) && (
-          <div className='bg-white rounded-xl border border-slate-200 p-6 space-y-4'>
+          <div className='surface-card-strong space-y-4 p-6'>
             {(profile?.biography || doctor.bio) && (
               <div>
                 <h2 className='text-base font-semibold text-slate-800 mb-2'>
@@ -205,7 +205,7 @@ export function DoctorProfilePage({
 
         {/* Ratings */}
         {ratings.count > 0 && (
-          <div className='bg-white rounded-xl border border-slate-200 p-6 space-y-4'>
+          <div className='surface-card-strong space-y-4 p-6'>
             <h2 className='text-base font-semibold text-slate-800'>
               Đánh giá từ bệnh nhân
             </h2>

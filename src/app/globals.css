@@ -122,5 +122,63 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(
+        circle at 10% -10%,
+        color-mix(in oklch, var(--primary) 18%, transparent),
+        transparent 35%
+      ),
+      radial-gradient(
+        circle at 90% 0%,
+        color-mix(in oklch, var(--chart-2) 14%, transparent),
+        transparent 28%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in oklch, var(--background) 98%, white),
+        var(--background)
+      );
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 30%, transparent);
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-2xl border border-white/60 bg-white/75 shadow-sm backdrop-blur-sm;
+  }
+
+  .surface-card-strong {
+    @apply rounded-3xl border border-white/70 bg-white/90 shadow-lg shadow-slate-900/5 backdrop-blur;
+  }
+
+  .page-shell {
+    @apply min-h-screen bg-transparent;
+  }
+
+  .section-shell {
+    @apply mx-auto w-full px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-shell-5 {
+    @apply mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-shell-6 {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-shell-7 {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .heading-gradient {
+    background: linear-gradient(135deg, #0f172a 0%, #2563eb 45%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }

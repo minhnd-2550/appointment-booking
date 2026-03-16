@@ -45,7 +45,7 @@ export default async function AppointmentDetailPage({ params }: Props) {
   if (!appt) notFound();
 
   return (
-    <div className='max-w-3xl mx-auto px-4 py-8'>
+    <div className='mx-auto w-full max-w-3xl py-6'>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <PatientAppointmentDetail appointment={appt as any} />
     </div>

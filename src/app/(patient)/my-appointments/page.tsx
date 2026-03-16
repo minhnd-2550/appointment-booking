@@ -34,8 +34,8 @@ export default async function MyAppointmentsPage() {
   >;
 
   return (
-    <div className='max-w-3xl mx-auto px-4 py-8'>
-      <h1 className='text-2xl font-bold mb-6'>Lịch hẹn của tôi</h1>
+    <div className='mx-auto w-full max-w-3xl space-y-6 py-6'>
+      <h1 className='text-2xl font-bold'>Lịch hẹn của tôi</h1>
       <PatientAppointmentList appointments={rows} />
     </div>
   );

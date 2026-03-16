@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ProviderTable } from "@/components/admin/ProviderTable";
 import { ServiceCatalogue } from "@/components/admin/ServiceCatalogue";
@@ -24,40 +23,27 @@ export default async function AdminUsersPage() {
   if (profile?.role !== "admin") redirect("/");
 
   return (
-    <main className='min-h-screen bg-slate-50'>
-      <header className='bg-white border-b border-slate-200'>
-        <div className='mx-auto max-w-6xl px-4 py-5 flex items-center justify-between'>
-          <div>
-            <h1 className='text-xl font-bold text-slate-900'>
-              Quản lý người dùng
-            </h1>
-            <p className='text-sm text-slate-500'>
-              Mời bác sĩ, quản lý dịch vụ
-            </p>
-          </div>
-          <Link
-            href='/'
-            className='text-sm text-slate-500 hover:text-slate-700'>
-            ← Trang chủ
-          </Link>
-        </div>
-      </header>
-
-      <div className='mx-auto max-w-6xl px-4 py-8 space-y-12'>
-        <section>
-          <h2 className='text-lg font-semibold text-slate-800 mb-4'>
-            Bác sĩ / Nhà cung cấp dịch vụ
-          </h2>
-          <ProviderTable />
-        </section>
-
-        <section>
-          <h2 className='text-lg font-semibold text-slate-800 mb-4'>
-            Danh mục dịch vụ
-          </h2>
-          <ServiceCatalogue />
-        </section>
+    <div className='mx-auto w-full max-w-6xl space-y-12 py-2'>
+      <div>
+        <h1 className='text-2xl font-bold text-slate-900'>
+          Quản lý người dùng
+        </h1>
+        <p className='text-sm text-slate-500'>Mời bác sĩ, quản lý dịch vụ</p>
       </div>
-    </main>
+
+      <section>
+        <h2 className='mb-4 text-lg font-semibold text-slate-800'>
+          Bác sĩ / Nhà cung cấp dịch vụ
+        </h2>
+        <ProviderTable />
+      </section>
+
+      <section>
+        <h2 className='mb-4 text-lg font-semibold text-slate-800'>
+          Danh mục dịch vụ
+        </h2>
+        <ServiceCatalogue />
+      </section>
+    </div>
   );
 }

@@ -9,10 +9,10 @@ export default async function DoctorPatientsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  if (!user) redirect("/auth/login?next=/dashboard/patients");
 
   return (
-    <div className='max-w-4xl mx-auto px-4 py-8'>
+    <div className='mx-auto w-full max-w-4xl py-6'>
       <h1 className='text-2xl font-bold mb-6'>Danh sách bệnh nhân</h1>
       <DoctorPatientList />
     </div>
