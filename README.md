@@ -34,3 +34,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Google Login setup (Supabase Auth)
+
+To enable patient Google login:
+
+1. Open Supabase Dashboard → Authentication → Providers → Google.
+2. Enable Google provider and set your Google OAuth Client ID/Secret.
+3. Add callback URLs:
+   - Local: `http://localhost:3000/auth/callback`
+   - Production: `https://<your-domain>/auth/callback`
+4. Ensure `.env.local` includes:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_APP_URL`
+
+> Note: Google OAuth credentials are managed in Supabase provider settings,
+> not committed to this repository.

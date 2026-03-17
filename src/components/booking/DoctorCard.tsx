@@ -21,7 +21,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
     .toUpperCase();
 
   return (
-    <Card className='group overflow-hidden rounded-2xl border-white/70 bg-white/85 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/10'>
+    <Card className='group overflow-hidden rounded-2xl border-white/70 bg-white/85 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/10 flex justify-between'>
       <CardHeader className='flex flex-row items-center gap-4 pb-2'>
         {/* Avatar */}
         {doctor.avatar_url ? (

@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { resolveRoleDestination, sanitizeRedirectPath } from "@/lib/auth";
+import type { UserRole } from "@/types/domain";
 
 /**
  * GET /auth/callback
@@ -8,35 +10,37 @@ import { createClient } from '@/lib/supabase/server'
  * It exchanges the one-time `code` for a session, then redirects the user.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  const { searchParams, origin } = request.nextUrl;
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? null;
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/auth/login?error=missing_code`)
+    return NextResponse.redirect(`${origin}/auth/login?error=missing_code`);
   }
 
-  const supabase = await createClient()
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  const supabase = await createClient();
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    console.error('[auth/callback] error exchanging code', error.message)
-    return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`)
+    console.error("[auth/callback] error exchanging code", error.message);
+    return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`);
   }
 
   // Fetch role for redirect decision
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('role')
-    .eq('id', user?.id ?? '')
-    .single()
+    .from("user_profiles")
+    .select("role")
+    .eq("id", user?.id ?? "")
+    .single();
 
-  const role = profile?.role as string | undefined
-  const destination = role === 'admin' ? '/admin/schedules' : next === '/' ? '/dashboard' : next
+  // T011/T013: Use canonical role resolver — patient → /my-appointments
+  const role = profile?.role as UserRole | undefined;
+  const roleDestination = resolveRoleDestination(role);
+  const destination = sanitizeRedirectPath(next, roleDestination);
 
-  return NextResponse.redirect(`${origin}${destination}`)
+  return NextResponse.redirect(`${origin}${destination}`);
 }
