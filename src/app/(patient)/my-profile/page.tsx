@@ -12,8 +12,8 @@ export default async function MyProfilePage() {
     supabase
       .from("patient_profiles")
       .select("*")
-      .eq("user_id", user?.id ?? "")
-      .single(),
+      .eq("id", user?.id ?? "")
+      .maybeSingle(),
     supabase
       .from("patient_medical_backgrounds")
       .select("*")
